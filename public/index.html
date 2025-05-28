@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Batalha de Palavras</title>
+</head>
+<body>
+  <h1>Batalha de Palavras</h1>
+  <div>
+    <input id="inputWord" type="text" placeholder="Digite sua palavra" />
+    <button onclick="sendWord()">Enviar</button>
+  </div>
+  <div id="messages"></div>
+
+  <script>
+    const ws = new WebSocket('ws://localhost:3000');
+
+    ws.onopen = () => {
+      console.log('Conectado ao servidor');
+    };
+
+    ws.onmessage = (event) => {
+      const messagesDiv = document.getElementById('messages');
+      const msg = document.createElement('div');
+      msg.textContent = event.data;
+      messagesDiv.appendChild(msg);
+    };
+
+    function sendWord() {
+      const input = document.getElementById('inputWord');
+      const word = input.value.trim();
+      if (word) {
+        ws.send(word);
+        input.value = '';
+      }
+    }
+  </script>
+</body>
+</html>
