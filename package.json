@@ -1,16 +1,32 @@
 {
   "name": "batalha-palavras",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "src/main.ts",
   "scripts": {
+    "start": "ts-node src/main.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
-    "express": "^5.1.0",
+    "@types/express": "^4.17.22",
+    "express": "^4.21.2",
+    "uuid": "^11.1.0",
     "ws": "^8.18.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nicollyvermieiro/batalha-palavras.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nicollyvermieiro/batalha-palavras/issues"
+  },
+  "homepage": "https://github.com/nicollyvermieiro/batalha-palavras#readme",
+  "description": "",
+  "devDependencies": {
+    "@types/ws": "^8.18.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   }
 }

@@ -3,37 +3,205 @@
 <head>
   <meta charset="UTF-8" />
   <title>Batalha de Palavras</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f0f0f0; }
+    #scoreboard { margin-top: 20px; }
+    .message { margin-top: 10px; padding: 8px; border-radius: 4px; }
+    .error { color: #b00020; background-color: #f8d7da; }
+    .success { color: #155724; background-color: #d4edda; }
+    #gameArea input, #gameArea button {
+      font-size: 1rem; padding: 8px;
+      margin-right: 5px; margin-top: 5px;
+    }
+    #rematchArea {
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
   <h1>Batalha de Palavras</h1>
-  <div>
+
+  <div id="joinArea">
+    <input id="playerName" type="text" placeholder="Seu nome" />
+    <button onclick="joinGame()">Entrar no jogo</button>
+  </div>
+
+  <div id="gameArea" style="display: none;">
+    <p>Bem-vindo, <span id="playerNameDisplay"></span>!</p>
     <input id="inputWord" type="text" placeholder="Digite sua palavra" />
     <button onclick="sendWord()">Enviar</button>
+    <p id="hint"></p>
+    <p id="attemptsDisplay"></p>
+    <div id="messages"></div>
+    <div id="winner"></div>
+    <h3>Placar</h3>
+    <ul id="scoreboard"></ul>
+
+    <div id="rematchArea" style="display: none;">
+      <p>Deseja uma revanche?</p>
+      <button id="rematchButton" onclick="requestRematch()" style="display: none;">Revanche</button>
+    </div>    
   </div>
-  <div id="messages"></div>
 
   <script>
-    const ws = new WebSocket('ws://localhost:3000');
+    let ws;
+    let playerName = "";
 
-    ws.onopen = () => {
-      console.log('Conectado ao servidor');
-    };
+    function joinGame() {
+      const input = document.getElementById('playerName');
+      playerName = input.value.trim();
+      if (!playerName) {
+        alert("Digite seu nome para entrar no jogo");
+        return;
+      }
 
-    ws.onmessage = (event) => {
-      const messagesDiv = document.getElementById('messages');
-      const msg = document.createElement('div');
-      msg.textContent = event.data;
-      messagesDiv.appendChild(msg);
-    };
+      ws = new WebSocket('ws://localhost:3000');
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ type: 'join', name: playerName }));
+        document.getElementById('playerNameDisplay').textContent = playerName;
+        document.getElementById('joinArea').style.display = 'none';
+        document.getElementById('gameArea').style.display = 'block';
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        switch (data.type) {
+          case 'playerJoined':
+            showMessage(`${data.name} entrou no jogo`, 'success');
+            break;
+
+          case 'playerGuessedCorrect':
+            showMessage(`${data.name} acertou a palavra: ${data.word}!`, 'success');
+            updateScore({ playerId: data.playerId, name: data.name, score: data.score });
+            document.getElementById('attemptsDisplay').textContent = '';
+            break;
+
+          case 'tryAgain':
+            showMessage(`${data.message}`, 'error');
+            document.getElementById('attemptsDisplay').textContent = `Tentativas: ${data.attempts}`;
+            break;
+
+            case 'newRound':
+              document.getElementById('hint').textContent = `Dica: ${data.hint} (${data.length} letras)`;
+              showMessage('Nova rodada começou! Tente adivinhar a palavra.', 'success');
+              document.getElementById('attemptsDisplay').textContent = '';
+              document.getElementById('rematchArea').style.display = 'none';
+              break;
+
+
+          case 'scoreboard':
+            const scoreboard = document.getElementById('scoreboard');
+            scoreboard.innerHTML = '';
+            data.scores.forEach(s => {
+              let li = document.getElementById(`score-${s.playerId}`);
+              if (!li) {
+                li = document.createElement('li');
+                li.id = `score-${s.playerId}`;
+                scoreboard.appendChild(li);
+              }
+              li.textContent = `${s.name}: ${s.score} ponto(s)`;
+            });
+            break;
+          
+            case 'rematchStarted':
+              showMessage(data.message, 'success');
+              document.getElementById('rematchArea').style.display = 'none';
+              document.getElementById('rematchButton').style.display = 'none'; // esconde o botão
+              document.getElementById('scoreboard').innerHTML = '';
+              document.getElementById('hint').textContent = `Dica: ${data.hint} (${data.length} letras)`;
+              document.getElementById('attemptsDisplay').textContent = '';
+              break;
+
+              case 'gameWinner':
+                showMessage(data.message, 'success');
+                document.getElementById('winner').textContent = data.message;
+                document.getElementById('rematchArea').style.display = 'block';
+                document.getElementById('rematchButton').style.display = 'block'; // mostra o botão
+                break;
+
+          case 'gameReset':
+            limparPlacarUI();
+            document.getElementById('rematchButton')?.classList.add('hidden');
+            break;
+          
+            case 'showRematch':
+            console.log('⚠️ showRematch recebido');
+              document.getElementById('rematchButton')?.classList.remove('hidden');
+              break;
+
+          case 'hideRematch':
+            document.getElementById('rematchButton')?.classList.add('hidden');
+            break;
+
+          case 'gameOver':
+            showMessage(data.message, 'success');
+            break;
+
+          case 'playerLeft':
+            showMessage(`Jogador saiu: ${data.playerId}`, 'error');
+            break;
+
+          case 'error':
+            showMessage(`Erro: ${data.message}`, 'error');
+            break;
+        }
+      };
+
+      ws.onerror = (error) => {
+        showMessage('Erro na conexão WebSocket', 'error');
+      };
+
+      ws.onclose = () => {
+        showMessage('Conexão encerrada.', 'error');
+        document.getElementById('gameArea').style.display = 'none';
+        document.getElementById('joinArea').style.display = 'block';
+      };
+    }
 
     function sendWord() {
       const input = document.getElementById('inputWord');
       const word = input.value.trim();
-      if (word) {
-        ws.send(word);
+      if (word && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'playWord', word }));
         input.value = '';
       }
     }
+
+    function showMessage(text, type) {
+      const div = document.getElementById('messages');
+      div.innerHTML = '';
+      const msg = document.createElement('div');
+      msg.className = `message ${type}`;
+      msg.textContent = text;
+      div.appendChild(msg);
+    }
+
+    function updateScore(data) {
+      const scoreboard = document.getElementById('scoreboard');
+      let li = document.getElementById(`score-${data.playerId}`);
+      if (!li) {
+        li = document.createElement('li');
+        li.id = `score-${data.playerId}`;
+        scoreboard.appendChild(li);
+      }
+      li.textContent = `${data.name}: ${data.score} ponto(s)`;
+    }
+
+    function requestRematch() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'rematchRequest' }));
+        document.getElementById('rematchArea').style.display = 'none';
+        showMessage('Aguardando nova partida...', 'success');
+      }
+    }
+
+    function limparPlacarUI() {
+      const placar = document.getElementById('scoreboard');
+      if (placar) placar.innerHTML = ''; // ou zera cada item
+    }
+
   </script>
 </body>
 </html>
