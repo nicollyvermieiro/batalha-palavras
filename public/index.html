@@ -140,7 +140,6 @@
     </div>
   </div>
 
-  <audio id="victorySound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_a69b00b92e.mp3?filename=success-1-6297.mp3" preload="auto"></audio>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <script>
@@ -157,7 +156,6 @@
     const victoryScreen = document.getElementById("victoryScreen");
     const victoryMessage = document.getElementById("victoryMessage");
     const btnRematch = document.getElementById("btnRematch");
-    const victorySound = document.getElementById("victorySound");
 
     joinBtn.onclick = () => {
       playerName = document.getElementById("playerName").value.trim();
@@ -239,7 +237,6 @@
           victoryScreen.style.display = "block";
           victoryMessage.textContent = data.message;
           launchConfetti();
-          victorySound.play();
           break;
 
         case "showRematch":
