@@ -45,7 +45,7 @@ export class Game {
 
   playWord(playerId: string, word: string) {
     if (this.gameOver) {
-      return { success: false, message: 'O jogo já acabou. Espere a revanche.' };
+      return { success: true, message: 'O jogo já acabou. Espere a revanche.' };
     }
 
     const player = this.players.get(playerId);
@@ -142,4 +142,19 @@ export class Game {
     this.shuffleWords();
     this.nextWord();
   }
+
+getAllWords() {
+  return this.words;
+}
+
+removeWord(wordToRemove: string) {
+  const index = this.words.findIndex(w => w.word === wordToRemove);
+  if (index !== -1) {
+    this.words.splice(index, 1);
+  } else {
+    throw new Error("Palavra não encontrada.");
+  }
+}
+
+
 }

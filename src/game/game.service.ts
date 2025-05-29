@@ -23,4 +23,22 @@ export function definirNovaPalavra(palavra: string, dica: string) {
   }
 }
 
+export function getTodasPalavras() {
+  return game.getAllWords(); // você deve implementar esse método no Game
+}
+
+export function removerPalavra(palavra: string) {
+  game.removeWord(palavra);
+}
+
+export function iniciarNovaRodada() {
+  game.startNewRound();
+}
+
+export function getPlacar() {
+  return game.getScoreboard();
+}
+
+
+
 export { game };

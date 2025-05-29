@@ -23,10 +23,10 @@
     "url": "https://github.com/nicollyvermieiro/batalha-palavras/issues"
   },
   "homepage": "https://github.com/nicollyvermieiro/batalha-palavras#readme",
-  "description": "",
   "devDependencies": {
     "@types/ws": "^8.18.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
-  }
+  },
+  "description": ""
 }

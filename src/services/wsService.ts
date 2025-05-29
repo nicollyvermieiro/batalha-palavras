@@ -1,9 +1,8 @@
 import { Game } from '../game/Game';
 import validWords from '../../data/words.json';
+import { game } from '../game/game.service'; 
 
 const { v4: uuidv4 } = require('uuid');
-
-const game = new Game(validWords);
 
 let rematchRequests = new Set<string>();
 let rematchTimeout: NodeJS.Timeout | null = null;
@@ -36,6 +35,11 @@ export function handleConnection(ws: any, wss: any): void {
         }
 
         broadcast({ type: 'playerJoined', playerId, name: data.name }, wss);
+
+        console.log("Jogadores conectados:", game.getPlayersCount());
+        if (game.getPlayersCount() >= 2) {
+          broadcast({ type: 'gameStart', message: 'O jogo começou! Boa sorte a todos!' }, wss);
+        }
         break;
 
       case 'playWord':
@@ -49,6 +53,7 @@ export function handleConnection(ws: any, wss: any): void {
           ws.send(JSON.stringify({ type: 'error', message: errorMessage }));
         } else {
           if (result.correct) {
+            // Mostra que o jogador acertou
             broadcast({
               type: 'playerGuessedCorrect',
               playerId: result.playerId,
@@ -58,89 +63,84 @@ export function handleConnection(ws: any, wss: any): void {
               points: result.points,
               attempts: result.attempts
             }, wss);
-          
+
+            // Atualiza o placar
+            broadcast({
+              type: 'scoreboard',
+              scores: game.getScoreboard()
+            }, wss);
+
+            // Se houver vencedor
             if (result.winner) {
-              // Ao anunciar o vencedor, ativamos o estado de "aguardando revanche"
               broadcast({
                 type: 'gameWinner',
                 message: `${result.name} venceu o jogo com ${result.score} pontos!`
               }, wss);
-
-              // Mostra botão de revanche para todos
-              broadcast({
-                type: 'showRematch'
-              }, wss);
-              console.log('✅ Evento showRematch enviado');
-
-              // Reseta qualquer estado antigo de revanche
+              broadcast({ type: 'showRematch' }, wss);
               resetRematch();
+            } else {
+              // Espera 3 segundos antes da nova rodada
+              setTimeout(() => {
+                if (result.nextRound) {
+                  broadcast({
+                    type: 'newRound',
+                    hint: result.nextRound.hint,
+                    length: result.nextRound.word.length
+                  }, wss);
+                }
+              }, 3000);
             }
-          
-            if (result.nextRound) {
-              broadcast({
-                type: 'newRound',
-                hint: result.nextRound.hint,
-                length: result.nextRound.word.length
-              }, wss);
-            }
-          
-            broadcast({
-              type: 'scoreboard',
-              scores: game.getScoreboard()
-            }, wss);          
           } else {
             ws.send(JSON.stringify({
               type: 'tryAgain',
               message: result.message,
               attempts: result.attempts
-            }));            
+            }));
           }
         }
         break;
 
-        case 'rematchRequest':
-          rematchRequests.add(playerId);
-        
+      case 'rematchRequest':
+        rematchRequests.add(playerId);
+
+        broadcast({
+          type: 'rematchStatus',
+          count: rematchRequests.size,
+          total: game.getPlayersCount()
+        }, wss);
+
+        if (rematchRequests.size === game.getPlayersCount()) {
+          resetRematch();
+          game.resetGame();
+
           broadcast({
-            type: 'rematchStatus',
-            count: rematchRequests.size,
-            total: game.getPlayersCount()
+            type: 'gameReset'
           }, wss);
-        
-          if (rematchRequests.size === game.getPlayersCount()) {
+
+          broadcast({
+            type: 'newRound',
+            hint: game.currentWordObj?.hint,
+            length: game.currentWordObj?.word.length
+          }, wss);
+
+          broadcast({
+            type: 'scoreboard',
+            scores: game.getScoreboard()
+          }, wss);
+
+          broadcast({
+            type: 'hideRematch'
+          }, wss);
+
+        } else if (!rematchTimeout) {
+          rematchTimeout = setTimeout(() => {
             resetRematch();
-        
-            game.resetGame();
-        
-            // Broadcast para todos que o jogo foi resetado
             broadcast({
-              type: 'gameReset'  // << aqui - novo tipo para resetar UI localmente
+              type: 'showRematch'
             }, wss);
-        
-            broadcast({
-              type: 'newRound',
-              hint: game.currentWordObj?.hint,
-              length: game.currentWordObj?.word.length
-            }, wss);
-        
-            broadcast({
-              type: 'scoreboard',
-              scores: game.getScoreboard()
-            }, wss);
-        
-            broadcast({
-              type: 'hideRematch'
-            }, wss);
-        
-          } else if (!rematchTimeout) {
-            rematchTimeout = setTimeout(() => {
-              resetRematch();
-              broadcast({
-                type: 'showRematch'
-              }, wss);
-            }, 30000);
-          }
-          break;
+          }, 30000);
+        }
+        break;
     }
   });
 
@@ -148,7 +148,6 @@ export function handleConnection(ws: any, wss: any): void {
     game.removePlayer(playerId);
     broadcast({ type: 'playerLeft', playerId }, wss);
 
-    // Se um jogador sair, remove ele dos pedidos de revanche (caso tivesse pedido)
     if (rematchRequests.has(playerId)) {
       rematchRequests.delete(playerId);
       broadcast({
@@ -169,6 +168,6 @@ function broadcast(message: any, wss: any) {
 }
 
 // Adicione essa função em Game.ts (se ainda não existir)
-Game.prototype.getPlayersCount = function() {
+Game.prototype.getPlayersCount = function () {
   return Object.keys(this.players).length;
 };

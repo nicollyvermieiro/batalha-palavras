@@ -12,13 +12,14 @@ const wss = new WebSocket.Server({ server });
 
 app.use(express.json());
 
-// Servir arquivos estáticos da pasta 'public' (index.html, CSS, JS, etc)
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-// Rotas da API
 app.use('/api', gameRoutes);
 
-// WebSocket
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+});
+
 wss.on('connection', (ws) => handleConnection(ws, wss));
 
 const port = 3000;

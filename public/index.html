@@ -1,207 +1,273 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <title>Batalha de Palavras</title>
+  <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f0f0f0; }
-    #scoreboard { margin-top: 20px; }
-    .message { margin-top: 10px; padding: 8px; border-radius: 4px; }
-    .error { color: #b00020; background-color: #f8d7da; }
-    .success { color: #155724; background-color: #d4edda; }
-    #gameArea input, #gameArea button {
-      font-size: 1rem; padding: 8px;
-      margin-right: 5px; margin-top: 5px;
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: linear-gradient(135deg, #ffd6e8, #d6f0ff);
+      margin: 0;
+      padding: 0;
+      text-align: center;
     }
-    #rematchArea {
+
+    h1 {
+      font-family: 'Luckiest Guy', cursive;
+      background: linear-gradient(to right, #ff4081, #2196f3);
+      color: linear-gradient(to right, #000000, #888888);
+      padding: 30px;
+      margin: 0;
+      font-size: 48px;
+      text-shadow: 2px 2px #00000030;
+    }
+
+    #gameContainer {
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    input, button {
+      padding: 12px;
+      font-size: 18px;
+      margin: 8px;
+      border: none;
+      border-radius: 10px;
+      outline: none;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    input {
+      width: 70%;
+      background-color: #ffffffcc;
+    }
+
+    button {
+      background-color: #ff4081;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #ec407a;
+    }
+
+    #feedback {
+      font-size: 20px;
+      margin-top: 15px;
+      color: #333;
+      min-height: 24px;
+    }
+
+    #scoreboard {
+      margin-top: 25px;
+      background: white;
+      border-radius: 15px;
+      padding: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    #scoreboard h3 {
+      margin-top: 0;
+      color: #2196f3;
+    }
+
+    #gameArea, #victoryScreen {
+      display: none;
       margin-top: 20px;
+    }
+
+    #victoryMessage {
+      font-size: 28px;
+      font-weight: bold;
+      color: purple;
+      margin: 20px 0;
+    }
+
+    #btnRematch {
+      background: purple;
+      color: white;
+      font-size: 18px;
+    }
+
+    #btnRematch:hover {
+      background: lightpink;
+    }
+
+    #confettiCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      width: 100%;
+      height: 100%;
+      z-index: 999;
+    }
+
+    label {
+      font-weight: bold;
+      font-size: 18px;
     }
   </style>
 </head>
 <body>
-  <h1>Batalha de Palavras</h1>
+  <h1>🔠 Batalha de Palavras 🔠	</h1>
+  <canvas id="confettiCanvas"></canvas>
+  <div id="players">Aguardando jogadores...</div>
+  <div id="status"></div>
 
-  <div id="joinArea">
-    <input id="playerName" type="text" placeholder="Seu nome" />
-    <button onclick="joinGame()">Entrar no jogo</button>
+  <div id="gameContainer">
+    <div>
+      <label for="playerName">Seu nome:</label>
+      <input id="playerName" type="text" placeholder="Digite seu nome" />
+      <button id="joinBtn">Entrar no jogo</button>
+    </div>
+
+    <div id="gameArea">
+      <p id="hintText"></p>
+      <input id="wordInput" placeholder="Digite uma palavra" />
+      <button id="sendBtn">Enviar</button>
+      <p id="feedback"></p>
+      <div id="scoreboard"></div>
+    </div>
+
+    <div id="victoryScreen">
+      <p id="victoryMessage"></p>
+      <button id="btnRematch">Jogar novamente</button>
+    </div>
   </div>
 
-  <div id="gameArea" style="display: none;">
-    <p>Bem-vindo, <span id="playerNameDisplay"></span>!</p>
-    <input id="inputWord" type="text" placeholder="Digite sua palavra" />
-    <button onclick="sendWord()">Enviar</button>
-    <p id="hint"></p>
-    <p id="attemptsDisplay"></p>
-    <div id="messages"></div>
-    <div id="winner"></div>
-    <h3>Placar</h3>
-    <ul id="scoreboard"></ul>
-
-    <div id="rematchArea" style="display: none;">
-      <p>Deseja uma revanche?</p>
-      <button id="rematchButton" onclick="requestRematch()" style="display: none;">Revanche</button>
-    </div>    
-  </div>
+  <audio id="victorySound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_a69b00b92e.mp3?filename=success-1-6297.mp3" preload="auto"></audio>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <script>
-    let ws;
+    const ws = new WebSocket("ws://localhost:3000");
     let playerName = "";
 
-    function joinGame() {
-      const input = document.getElementById('playerName');
-      playerName = input.value.trim();
-      if (!playerName) {
-        alert("Digite seu nome para entrar no jogo");
-        return;
+    const joinBtn = document.getElementById("joinBtn");
+    const sendBtn = document.getElementById("sendBtn");
+    const wordInput = document.getElementById("wordInput");
+    const hintText = document.getElementById("hintText");
+    const feedback = document.getElementById("feedback");
+    const scoreboard = document.getElementById("scoreboard");
+    const gameArea = document.getElementById("gameArea");
+    const victoryScreen = document.getElementById("victoryScreen");
+    const victoryMessage = document.getElementById("victoryMessage");
+    const btnRematch = document.getElementById("btnRematch");
+    const victorySound = document.getElementById("victorySound");
+
+    joinBtn.onclick = () => {
+      playerName = document.getElementById("playerName").value.trim();
+      if (!playerName) return alert("Digite seu nome!");
+      ws.send(JSON.stringify({ type: "join", name: playerName }));
+      gameArea.style.display = "block";
+      joinBtn.disabled = true;
+    };
+
+    sendBtn.onclick = () => {
+      const word = wordInput.value.trim();
+      if (!word) return;
+      ws.send(JSON.stringify({ type: "playWord", word }));
+      wordInput.value = "";
+    };
+
+    btnRematch.onclick = () => {
+      ws.send(JSON.stringify({ type: "rematchRequest" }));
+      btnRematch.style.display = "none";
+      victoryMessage.textContent = "Aguardando outros jogadores...";
+    };
+
+    function launchConfetti() {
+      confetti({
+        particleCount: 150,
+        spread: 90,
+        origin: { y: 0.6 }
+      });
+    }
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      switch (data.type) {
+        case "newRound":
+          hintText.textContent = `Dica: ${data.hint} (${data.length} letras)`;
+          feedback.textContent = "";
+          wordInput.disabled = false;
+          sendBtn.disabled = false;  // NOVO: reabilita botão de envio
+          wordInput.focus();         // opcional: já posiciona cursor no input
+
+
+        case "tryAgain":
+          if (data.message && typeof data.attempts === "number") {
+            feedback.textContent = `${data.message} (${data.attempts}/10 tentativas)`;
+          } else {
+            feedback.textContent = ""; // não exibe nada se os dados estiverem incompletos
+          }
+          break;
+
+
+        case "playerGuessedCorrect":
+          if (data.name === playerName) {
+            feedback.textContent = `🎉 Você acertou a palavra "${data.word}" e ganhou ${data.points} pontos!`;
+          } else {
+            feedback.textContent = `${data.name} acertou a palavra "${data.word}" e ganhou ${data.points} pontos!`;
+          }
+
+          sendBtn.disabled = true;      
+          wordInput.disabled = true;    
+
+          setTimeout(() => {
+            feedback.textContent = "Próxima rodada iniciando...";
+          }, 3000);
+
+          break;
+
+        case "scoreboard":
+          scoreboard.innerHTML = "<h3>Placar</h3>" + data.scores.map(p =>
+            `<p>${p.name}: ${p.score} pts</p>`).join("");
+          break;
+
+        case "error":
+          feedback.textContent = data.message;
+          break;
+
+        case "gameWinner":
+          gameArea.style.display = "none";
+          victoryScreen.style.display = "block";
+          victoryMessage.textContent = data.message;
+          launchConfetti();
+          victorySound.play();
+          break;
+
+        case "showRematch":
+          btnRematch.style.display = "inline-block";
+          break;
+
+        case "gameReset":
+          victoryScreen.style.display = "none";
+          gameArea.style.display = "block";
+          wordInput.disabled = false;
+          feedback.textContent = "";
+          hintText.textContent = "";
+          scoreboard.innerHTML = "";
+          break;
+
+        case "rematchStatus":
+          feedback.textContent = `Jogadores prontos: ${data.count}/${data.total}`;
+          break;
+        
+        case 'gameStart':
+          console.log('Evento gameStart recebido', data);
+          feedback.textContent = data.message;
+          wordInput.disabled = false;
+          sendBtn.disabled = false;
+          wordInput.focus();
+          break;
       }
-
-      ws = new WebSocket('ws://localhost:3000');
-
-      ws.onopen = () => {
-        ws.send(JSON.stringify({ type: 'join', name: playerName }));
-        document.getElementById('playerNameDisplay').textContent = playerName;
-        document.getElementById('joinArea').style.display = 'none';
-        document.getElementById('gameArea').style.display = 'block';
-      };
-
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-
-        switch (data.type) {
-          case 'playerJoined':
-            showMessage(`${data.name} entrou no jogo`, 'success');
-            break;
-
-          case 'playerGuessedCorrect':
-            showMessage(`${data.name} acertou a palavra: ${data.word}!`, 'success');
-            updateScore({ playerId: data.playerId, name: data.name, score: data.score });
-            document.getElementById('attemptsDisplay').textContent = '';
-            break;
-
-          case 'tryAgain':
-            showMessage(`${data.message}`, 'error');
-            document.getElementById('attemptsDisplay').textContent = `Tentativas: ${data.attempts}`;
-            break;
-
-            case 'newRound':
-              document.getElementById('hint').textContent = `Dica: ${data.hint} (${data.length} letras)`;
-              showMessage('Nova rodada começou! Tente adivinhar a palavra.', 'success');
-              document.getElementById('attemptsDisplay').textContent = '';
-              document.getElementById('rematchArea').style.display = 'none';
-              break;
-
-
-          case 'scoreboard':
-            const scoreboard = document.getElementById('scoreboard');
-            scoreboard.innerHTML = '';
-            data.scores.forEach(s => {
-              let li = document.getElementById(`score-${s.playerId}`);
-              if (!li) {
-                li = document.createElement('li');
-                li.id = `score-${s.playerId}`;
-                scoreboard.appendChild(li);
-              }
-              li.textContent = `${s.name}: ${s.score} ponto(s)`;
-            });
-            break;
-          
-            case 'rematchStarted':
-              showMessage(data.message, 'success');
-              document.getElementById('rematchArea').style.display = 'none';
-              document.getElementById('rematchButton').style.display = 'none'; // esconde o botão
-              document.getElementById('scoreboard').innerHTML = '';
-              document.getElementById('hint').textContent = `Dica: ${data.hint} (${data.length} letras)`;
-              document.getElementById('attemptsDisplay').textContent = '';
-              break;
-
-              case 'gameWinner':
-                showMessage(data.message, 'success');
-                document.getElementById('winner').textContent = data.message;
-                document.getElementById('rematchArea').style.display = 'block';
-                document.getElementById('rematchButton').style.display = 'block'; // mostra o botão
-                break;
-
-          case 'gameReset':
-            limparPlacarUI();
-            document.getElementById('rematchButton')?.classList.add('hidden');
-            break;
-          
-            case 'showRematch':
-            console.log('⚠️ showRematch recebido');
-              document.getElementById('rematchButton')?.classList.remove('hidden');
-              break;
-
-          case 'hideRematch':
-            document.getElementById('rematchButton')?.classList.add('hidden');
-            break;
-
-          case 'gameOver':
-            showMessage(data.message, 'success');
-            break;
-
-          case 'playerLeft':
-            showMessage(`Jogador saiu: ${data.playerId}`, 'error');
-            break;
-
-          case 'error':
-            showMessage(`Erro: ${data.message}`, 'error');
-            break;
-        }
-      };
-
-      ws.onerror = (error) => {
-        showMessage('Erro na conexão WebSocket', 'error');
-      };
-
-      ws.onclose = () => {
-        showMessage('Conexão encerrada.', 'error');
-        document.getElementById('gameArea').style.display = 'none';
-        document.getElementById('joinArea').style.display = 'block';
-      };
-    }
-
-    function sendWord() {
-      const input = document.getElementById('inputWord');
-      const word = input.value.trim();
-      if (word && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'playWord', word }));
-        input.value = '';
-      }
-    }
-
-    function showMessage(text, type) {
-      const div = document.getElementById('messages');
-      div.innerHTML = '';
-      const msg = document.createElement('div');
-      msg.className = `message ${type}`;
-      msg.textContent = text;
-      div.appendChild(msg);
-    }
-
-    function updateScore(data) {
-      const scoreboard = document.getElementById('scoreboard');
-      let li = document.getElementById(`score-${data.playerId}`);
-      if (!li) {
-        li = document.createElement('li');
-        li.id = `score-${data.playerId}`;
-        scoreboard.appendChild(li);
-      }
-      li.textContent = `${data.name}: ${data.score} ponto(s)`;
-    }
-
-    function requestRematch() {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'rematchRequest' }));
-        document.getElementById('rematchArea').style.display = 'none';
-        showMessage('Aguardando nova partida...', 'success');
-      }
-    }
-
-    function limparPlacarUI() {
-      const placar = document.getElementById('scoreboard');
-      if (placar) placar.innerHTML = ''; // ou zera cada item
-    }
-
+    };
   </script>
 </body>
 </html>
