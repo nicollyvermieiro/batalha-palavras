@@ -1,6 +1,5 @@
+import { game } from '../game/game.service';
 import { Game } from '../game/Game';
-import validWords from '../../data/words.json';
-import { game } from '../game/game.service'; 
 
 const { v4: uuidv4 } = require('uuid');
 
@@ -53,7 +52,6 @@ export function handleConnection(ws: any, wss: any): void {
           ws.send(JSON.stringify({ type: 'error', message: errorMessage }));
         } else {
           if (result.correct) {
-            // Mostra que o jogador acertou
             broadcast({
               type: 'playerGuessedCorrect',
               playerId: result.playerId,
@@ -64,13 +62,11 @@ export function handleConnection(ws: any, wss: any): void {
               attempts: result.attempts
             }, wss);
 
-            // Atualiza o placar
             broadcast({
               type: 'scoreboard',
               scores: game.getScoreboard()
             }, wss);
 
-            // Se houver vencedor
             if (result.winner) {
               broadcast({
                 type: 'gameWinner',
@@ -79,7 +75,6 @@ export function handleConnection(ws: any, wss: any): void {
               broadcast({ type: 'showRematch' }, wss);
               resetRematch();
             } else {
-              // Espera 3 segundos antes da nova rodada
               setTimeout(() => {
                 if (result.nextRound) {
                   broadcast({
@@ -113,9 +108,7 @@ export function handleConnection(ws: any, wss: any): void {
           resetRematch();
           game.resetGame();
 
-          broadcast({
-            type: 'gameReset'
-          }, wss);
+          broadcast({ type: 'gameReset' }, wss);
 
           broadcast({
             type: 'newRound',
@@ -128,16 +121,11 @@ export function handleConnection(ws: any, wss: any): void {
             scores: game.getScoreboard()
           }, wss);
 
-          broadcast({
-            type: 'hideRematch'
-          }, wss);
-
+          broadcast({ type: 'hideRematch' }, wss);
         } else if (!rematchTimeout) {
           rematchTimeout = setTimeout(() => {
             resetRematch();
-            broadcast({
-              type: 'showRematch'
-            }, wss);
+            broadcast({ type: 'showRematch' }, wss);
           }, 30000);
         }
         break;
@@ -166,8 +154,3 @@ function broadcast(message: any, wss: any) {
     }
   });
 }
-
-// Adicione essa função em Game.ts (se ainda não existir)
-Game.prototype.getPlayersCount = function () {
-  return Object.keys(this.players).length;
-};

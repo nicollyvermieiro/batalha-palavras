@@ -110,22 +110,11 @@ export class Game {
     this.nextWord();
   }
 
-  getPlayersCount() {
-    return this.players.size;
-  }
-
   public addWord(newWordObj: { word: string; hint: string }) {
     const wordLower = newWordObj.word.toLowerCase();
-
     const existsInWords = this.words.some(w => w.word.toLowerCase() === wordLower);
-    if (existsInWords) {
-      throw new Error('A palavra já existe na lista.');
-    }
-
-    if (this.usedWords.has(wordLower)) {
-      throw new Error('A palavra já foi usada anteriormente.');
-    }
-
+    if (existsInWords) throw new Error('A palavra já existe na lista.');
+    if (this.usedWords.has(wordLower)) throw new Error('A palavra já foi usada anteriormente.');
     this.words.push(newWordObj);
     this.shuffleWords();
   }
@@ -138,23 +127,25 @@ export class Game {
     });
 
     this.usedWords.clear();
-    this.gameOver = false; // <- RESET DO FIM DE JOGO
+    this.gameOver = false;
     this.shuffleWords();
     this.nextWord();
   }
 
-getAllWords() {
-  return this.words;
-}
-
-removeWord(wordToRemove: string) {
-  const index = this.words.findIndex(w => w.word === wordToRemove);
-  if (index !== -1) {
-    this.words.splice(index, 1);
-  } else {
-    throw new Error("Palavra não encontrada.");
+  public getAllWords() {
+    return this.words;
   }
-}
 
+  public removeWord(wordToRemove: string) {
+    const index = this.words.findIndex(w => w.word.toLowerCase() === wordToRemove.toLowerCase());
+    if (index !== -1) {
+      this.words.splice(index, 1);
+    } else {
+      throw new Error("Palavra não encontrada.");
+    }
+  }
 
+  public getPlayersCount(): number {
+    return this.players.size;
+  }
 }

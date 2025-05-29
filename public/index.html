@@ -45,14 +45,14 @@
     }
 
     button {
-      background-color: #ff4081;
+      background-color: #ee719b;
       color: white;
       cursor: pointer;
       transition: background-color 0.3s;
     }
 
     button:hover {
-      background-color: #ec407a;
+      background-color: #ee719b;
     }
 
     #feedback {
@@ -83,12 +83,12 @@
     #victoryMessage {
       font-size: 28px;
       font-weight: bold;
-      color: purple;
+      color: rgb(206, 115, 206);
       margin: 20px 0;
     }
 
     #btnRematch {
-      background: purple;
+      background: rgb(206, 115, 206);
       color: white;
       font-size: 18px;
     }
@@ -116,7 +116,6 @@
 <body>
   <h1>🔠 Batalha de Palavras 🔠	</h1>
   <canvas id="confettiCanvas"></canvas>
-  <div id="players">Aguardando jogadores...</div>
   <div id="status"></div>
 
   <div id="gameContainer">
@@ -130,6 +129,9 @@
       <p id="hintText"></p>
       <input id="wordInput" placeholder="Digite uma palavra" />
       <button id="sendBtn">Enviar</button>
+
+      <div id="gameMessage"></div>
+      
       <p id="feedback"></p>
       <div id="scoreboard"></div>
     </div>

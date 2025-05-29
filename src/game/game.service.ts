@@ -1,7 +1,7 @@
 import { Game } from '../game/Game';
-import wordsData from '../../data/words.json';
+import wordsData from '../data/words.json';
 
-const game = new Game(wordsData);
+const game = new Game((wordsData as any).default || wordsData);
 
 export function getPalavraAtual() {
   if (!game.currentWordObj) {
@@ -24,7 +24,7 @@ export function definirNovaPalavra(palavra: string, dica: string) {
 }
 
 export function getTodasPalavras() {
-  return game.getAllWords(); // você deve implementar esse método no Game
+  return game.getAllWords();
 }
 
 export function removerPalavra(palavra: string) {
@@ -38,7 +38,5 @@ export function iniciarNovaRodada() {
 export function getPlacar() {
   return game.getScoreboard();
 }
-
-
 
 export { game };
