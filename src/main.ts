@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import http from 'http';
 import path from 'path';
@@ -22,7 +23,9 @@ app.get('*', (_req, res) => {
 
 wss.on('connection', (ws) => handleConnection(ws, wss));
 
-const port = 3000;
+const port = process.env.PORT || 3000;
 server.listen(port, () => {
-  console.log(`Servidor rodando em http://localhost:${port}`);
+  console.log(`Servidor rodando na porta ${port}`);
 });
+
+

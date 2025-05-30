@@ -8,5 +8,20 @@
   { "word": "escola", "hint": "Lugar para aprender" },
   { "word": "computador", "hint": "Máquina para processar dados" },
   { "word": "praia", "hint": "Lugar com areia e mar" },
-  { "word": "floresta", "hint": "Área com muitas árvores" }
+  { "word": "floresta", "hint": "Área com muitas árvores" },
+  { "word": "bicicleta", "hint": "Meio de transporte com duas rodas" },
+  { "word": "avião", "hint": "Meio de transporte que voa" },
+  { "word": "caneta", "hint": "Usada para escrever" },
+  { "word": "bola", "hint": "Usada em muitos esportes" },
+  { "word": "cadeira", "hint": "Usada para sentar" },
+  { "word": "telefone", "hint": "Usado para fazer ligações" },
+  { "word": "geladeira", "hint": "Mantém os alimentos frios" },
+  { "word": "sapato", "hint": "Usado nos pés" },
+  { "word": "relógio", "hint": "Mostra as horas" },
+  { "word": "guitarra", "hint": "Instrumento musical com cordas" },
+  { "word": "montanha", "hint": "Elevação natural do terreno" },
+  { "word": "estrela", "hint": "Brilha no céu à noite" },
+  { "word": "chuva", "hint": "Cai do céu em dias nublados" },
+  { "word": "sorvete", "hint": "Doce gelado, ótimo no verão" },
+  { "word": "leão", "hint": "Rei da selva" }
 ]

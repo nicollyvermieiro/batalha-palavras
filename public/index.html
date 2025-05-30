@@ -145,7 +145,8 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <script>
-    const ws = new WebSocket("ws://localhost:3000");
+    ws = new WebSocket(`ws://${location.hostname}:3000`);
+
     let playerName = "";
 
     const joinBtn = document.getElementById("joinBtn");

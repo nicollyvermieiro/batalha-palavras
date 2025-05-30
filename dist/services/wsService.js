@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleConnection = handleConnection;
-const Game_1 = require("../game/Game");
 const game_service_1 = require("../game/game.service");
 const { v4: uuidv4 } = require('uuid');
 let rematchRequests = new Set();
@@ -45,7 +44,6 @@ function handleConnection(ws, wss) {
                 }
                 else {
                     if (result.correct) {
-                        // Mostra que o jogador acertou
                         broadcast({
                             type: 'playerGuessedCorrect',
                             playerId: result.playerId,
@@ -55,12 +53,10 @@ function handleConnection(ws, wss) {
                             points: result.points,
                             attempts: result.attempts
                         }, wss);
-                        // Atualiza o placar
                         broadcast({
                             type: 'scoreboard',
                             scores: game_service_1.game.getScoreboard()
                         }, wss);
-                        // Se houver vencedor
                         if (result.winner) {
                             broadcast({
                                 type: 'gameWinner',
@@ -70,7 +66,6 @@ function handleConnection(ws, wss) {
                             resetRematch();
                         }
                         else {
-                            // Espera 3 segundos antes da nova rodada
                             setTimeout(() => {
                                 if (result.nextRound) {
                                     broadcast({
@@ -101,9 +96,7 @@ function handleConnection(ws, wss) {
                 if (rematchRequests.size === game_service_1.game.getPlayersCount()) {
                     resetRematch();
                     game_service_1.game.resetGame();
-                    broadcast({
-                        type: 'gameReset'
-                    }, wss);
+                    broadcast({ type: 'gameReset' }, wss);
                     broadcast({
                         type: 'newRound',
                         hint: (_a = game_service_1.game.currentWordObj) === null || _a === void 0 ? void 0 : _a.hint,
@@ -113,16 +106,12 @@ function handleConnection(ws, wss) {
                         type: 'scoreboard',
                         scores: game_service_1.game.getScoreboard()
                     }, wss);
-                    broadcast({
-                        type: 'hideRematch'
-                    }, wss);
+                    broadcast({ type: 'hideRematch' }, wss);
                 }
                 else if (!rematchTimeout) {
                     rematchTimeout = setTimeout(() => {
                         resetRematch();
-                        broadcast({
-                            type: 'showRematch'
-                        }, wss);
+                        broadcast({ type: 'showRematch' }, wss);
                     }, 30000);
                 }
                 break;
@@ -148,7 +137,3 @@ function broadcast(message, wss) {
         }
     });
 }
-// Adicione essa função em Game.ts (se ainda não existir)
-Game_1.Game.prototype.getPlayersCount = function () {
-    return Object.keys(this.players).length;
-};

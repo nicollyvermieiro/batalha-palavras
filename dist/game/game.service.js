@@ -11,8 +11,8 @@ exports.removerPalavra = removerPalavra;
 exports.iniciarNovaRodada = iniciarNovaRodada;
 exports.getPlacar = getPlacar;
 const Game_1 = require("../game/Game");
-const words_json_1 = __importDefault(require("../../data/words.json"));
-const game = new Game_1.Game(words_json_1.default);
+const words_json_1 = __importDefault(require("../data/words.json"));
+const game = new Game_1.Game(words_json_1.default.default || words_json_1.default);
 exports.game = game;
 function getPalavraAtual() {
     if (!game.currentWordObj) {
@@ -35,7 +35,7 @@ function definirNovaPalavra(palavra, dica) {
     }
 }
 function getTodasPalavras() {
-    return game.getAllWords(); // você deve implementar esse método no Game
+    return game.getAllWords();
 }
 function removerPalavra(palavra) {
     game.removeWord(palavra);
