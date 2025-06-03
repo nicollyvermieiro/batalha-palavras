@@ -25,7 +25,8 @@ wss.on('connection', (ws) => handleConnection(ws, wss));
 
 const port = process.env.PORT || 3000;
 server.listen(port, () => {
-  console.log(`Servidor rodando em http://localhost:${port}`);
+  console.log(`Servidor rodando na porta ${port}`);
 });
+
 
 
