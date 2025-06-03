@@ -16,7 +16,6 @@ function handleConnection(ws, wss) {
     const playerId = uuidv4();
     ws.playerId = playerId;
     ws.on('message', (msg) => {
-        var _a, _b;
         const data = JSON.parse(msg);
         switch (data.type) {
             case 'join':
@@ -99,8 +98,8 @@ function handleConnection(ws, wss) {
                     broadcast({ type: 'gameReset' }, wss);
                     broadcast({
                         type: 'newRound',
-                        hint: (_a = game_service_1.game.currentWordObj) === null || _a === void 0 ? void 0 : _a.hint,
-                        length: (_b = game_service_1.game.currentWordObj) === null || _b === void 0 ? void 0 : _b.word.length
+                        hint: game_service_1.game.currentWordObj?.hint,
+                        length: game_service_1.game.currentWordObj?.word.length
                     }, wss);
                     broadcast({
                         type: 'scoreboard',

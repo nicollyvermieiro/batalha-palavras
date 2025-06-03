@@ -42,7 +42,6 @@ class Game {
         this.players.delete(playerId);
     }
     playWord(playerId, word) {
-        var _a;
         if (this.gameOver) {
             return { success: true, message: 'O jogo já acabou. Espere a revanche.' };
         }
@@ -75,7 +74,7 @@ class Game {
                 points,
                 attempts: player.attempts,
                 winner,
-                nextRound: (_a = this.currentWordObj) !== null && _a !== void 0 ? _a : undefined
+                nextRound: this.currentWordObj ?? undefined
             };
         }
         else {
