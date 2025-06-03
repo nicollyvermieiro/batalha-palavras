@@ -55,5 +55,5 @@ app.get('*', (_req, res) => {
 wss.on('connection', (ws) => (0, wsService_1.handleConnection)(ws, wss));
 const port = process.env.PORT || 3000;
 server.listen(port, () => {
-    console.log(`Servidor rodando na porta ${port}`);
+    console.log(`Servidor rodando em http://localhost:${port}`);
 });
